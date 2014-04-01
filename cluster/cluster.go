@@ -1,7 +1,7 @@
 package cluster
 
 import (
-	"gmemcached"
+	"github.com/dgkang/gmemcached/gmemcached"
 	"hash/adler32"
 	"net"
 	"strconv"

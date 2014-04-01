@@ -1,9 +1,9 @@
 package main
 
 import (
-	"cluster"
 	"fmt"
-	"gmemcached"
+	"github.com/dgkang/gmemcached/cluster"
+	"github.com/dgkang/gmemcached/gmemcached"
 	"time"
 )
 
