@@ -1,4 +1,4 @@
 gmemcached
 ==========
 
-This is a client library for memcached
+This is a gmemcached client library for the Go programming language
