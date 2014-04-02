@@ -32,6 +32,8 @@ const (
 	SlabsCommand      CommandType = 6
 	StatisticsCommand CommandType = 7
 	DeletedCommand    CommandType = 8
+	FlushallCommand   CommandType = 9
+	VersionCommand    CommandType = 10
 )
 
 type RespondType uint32
@@ -116,6 +118,12 @@ func (G *GMConnection) commandType(cmd string) (CommandType, string) {
 
 	case cmd == "stats":
 		return StatisticsCommand, cmd
+
+	case cmd == "flush_all":
+		return FlushallCommand, cmd
+
+	case cmd == "version":
+		return VersionCommand, cmd
 	}
 	return InvalidCommand, ""
 }
@@ -130,6 +138,10 @@ func (G *GMConnection) Command(cmd string, data interface{}, args ...interface{}
 	cmdType, command := G.commandType(cmd)
 	if cmdType == InvalidCommand {
 		return nil, fmt.Errorf("command \"%s\" invalid", cmd)
+	}
+
+	if cmdType == StatisticsCommand && len(args) > 0 {
+		return nil, fmt.Errorf("not support stats command with arguments.")
 	}
 	session.CmdType = cmdType
 	buf := session.requestBody
@@ -337,6 +349,11 @@ func (G *GMConnection) readLine(session *CommandSession, rs ReadStatus, key stri
 		session.ReplyType = RT_VALUE
 		session.value[as[1]] = as[2]
 		return rs_Next, "", nil
+
+	case "VERSION":
+		session.ReplyType = RT_VALUE
+		session.value["data"] = as[1]
+		return rs_END, "", nil
 
 	case "END":
 		if session.ReplyType == RT_UNKNOW {

@@ -14,10 +14,12 @@ func main() {
 		return
 	}
 
-	if R,E := G.Command("stats",nil); E == nil{
+	if R,E := G.Command("stats",nil,"settings"); E == nil{
 		for k,v := range R.Values() {
 			fmt.Printf("%s:%+v\n",k,v)
 			}
+	}else{
+		fmt.Printf("E:%s\n",E.Error())
 	}
 	
 	C := cluster.New(cluster.Adler32Selector, 5000*time.Microsecond, 500*time.Microsecond, 500*time.Microsecond)
@@ -55,6 +57,12 @@ func main() {
 		}
 		fmt.Printf("RS:%d\n",R.ReplyType)
 	}else{
+		fmt.Printf("E:%s\n",E.Error())
+	}
+
+	if R,E := GG.Command("version",nil); E == nil {
+		fmt.Printf("R:%s\n",gmemcached.String(R.Values()["data"]))
+	}else {
 		fmt.Printf("E:%s\n",E.Error())
 	}
 }
