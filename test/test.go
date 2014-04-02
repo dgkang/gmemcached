@@ -7,8 +7,7 @@ import (
 	"time"
 )
 
-func main() {
-	
+func main() {	
 	G, E := gmemcached.Connect("localhost", 2345)
 	if E != nil {
 		fmt.Printf("%s\n", E.Error())
@@ -36,13 +35,25 @@ func main() {
 	if R, E := G.Command("set",112,"id", 0, 0, gmemcached.SizeOfBody(112)); E != nil {
 		fmt.Printf("E:%s\n",E.Error())
 	}else{
-		fmt.Printf("R:%d\n",R.ReplyType)
+		fmt.Printf("RS:%d\n",R.ReplyType)
  	}
 
 
 	GG := C.Get([]byte("id"))
 	if R, E := GG.Command("get",nil,"id"); E == nil {
-		fmt.Printf("G:%v\n", R.Item("id")["data"])
+		if i,e := gmemcached.Int64(R.Item("id")["data"]); e == nil {
+			fmt.Printf("R:%d\n", i)
+		}
+		fmt.Printf("RS:%d\n",R.ReplyType)
+	}else{
+		fmt.Printf("E:%s\n",E.Error())
+	}
+
+	if R, E := GG.Command("incr",nil,"id",20); E == nil {
+		if i,e := gmemcached.Int64(R.Values()["data"]); e == nil {
+			fmt.Printf("R:%d\n", i)
+		}
+		fmt.Printf("RS:%d\n",R.ReplyType)
 	}else{
 		fmt.Printf("E:%s\n",E.Error())
 	}
