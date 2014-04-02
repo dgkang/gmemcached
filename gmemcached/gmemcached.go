@@ -55,6 +55,7 @@ const (
 	RT_UNSAFE      RespondType = 15
 	RT_SAME        RespondType = 16
 	RT_VALUE       RespondType = 17
+	RT_NULL        RespondType = 18
 )
 
 type ReadStatus uint32
@@ -338,6 +339,9 @@ func (G *GMConnection) readLine(session *CommandSession, rs ReadStatus, key stri
 		return rs_Next, "", nil
 
 	case "END":
+		if session.ReplyType == RT_UNKNOW {
+			session.ReplyType = RT_NULL
+		}
 		return rs_END, "", nil
 	}
 
