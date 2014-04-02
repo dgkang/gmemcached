@@ -119,7 +119,7 @@ func (G *GMConnection) commandType(cmd string) (CommandType, string) {
 	return InvalidCommand, ""
 }
 
-func (G *GMConnection) CreateCommand(cmd string, args ...interface{}) (*CommandSession, error) {
+func (G *GMConnection) Command(cmd string, data interface{}, args ...interface{}) (*CommandSession, error) {
 	session := &CommandSession{InvalidCommand,
 		RT_UNKNOW,
 		new(bytes.Buffer),
@@ -149,10 +149,30 @@ func (G *GMConnection) CreateCommand(cmd string, args ...interface{}) (*CommandS
 		}
 	}
 	fmt.Fprintf(buf, "\r\n")
+
+	if e := G.appendCommand(session, data); e != nil {
+		return nil, e
+	}
+
+	if G.writeTimeout != 0 {
+		G.conn.SetWriteDeadline(time.Now().Add(G.writeTimeout))
+	}
+
+	if _, e := G.writer.Write(session.requestBody.Bytes()); e != nil {
+		return nil, e
+	}
+
+	if e := G.writer.Flush(); e != nil {
+		return nil, e
+	}
+
+	if e := G.analyzeReply(session); e != nil {
+		return nil, e
+	}
 	return session, nil
 }
 
-func (G *GMConnection) SendCommand(session *CommandSession, data interface{}) error {
+func (G *GMConnection) appendCommand(session *CommandSession, data interface{}) error {
 	buf := session.requestBody
 	switch v := data.(type) {
 	case []byte:
@@ -169,17 +189,7 @@ func (G *GMConnection) SendCommand(session *CommandSession, data interface{}) er
 		fmt.Fprintf(buf, "%v", v)
 		fmt.Fprintf(buf, "\r\n")
 	}
-
-	if G.writeTimeout != 0 {
-		G.conn.SetWriteDeadline(time.Now().Add(G.writeTimeout))
-	}
-	if _, e := G.writer.Write(session.requestBody.Bytes()); e != nil {
-		return e
-	}
-	if e := G.writer.Flush(); e != nil {
-		return e
-	}
-	return G.analyzeReply(session)
+	return nil
 }
 
 func (G *GMConnection) readLine(session *CommandSession, rs ReadStatus, key string) (ReadStatus, string, error) {
@@ -342,11 +352,10 @@ func (G *GMConnection) readLine(session *CommandSession, rs ReadStatus, key stri
 func (G *GMConnection) analyzeReply(session *CommandSession) error {
 	var key string
 	var rs ReadStatus = rs_START
-	var e error
-	for {
-		if rs, key, e = G.readLine(session, rs, key); e != nil || rs == rs_END {
-			break
-		}
+	var e error = nil
+
+	for e == nil && rs != rs_END {
+		rs, key, e = G.readLine(session, rs, key)
 	}
 	return e
 }
