@@ -19,7 +19,8 @@ type Cluster interface {
 type SelectorType uint32
 
 const (
-	Adler32Selector SelectorType = 1
+	ModSelector  SelectorType = 1
+	HashSelector SelectorType = 2
 )
 
 type ServerList struct {
@@ -31,10 +32,10 @@ type ServerList struct {
 }
 
 func New(st SelectorType, ct time.Duration, wt time.Duration, rt time.Duration) Cluster {
-	if st == Adler32Selector {
+	if st == ModSelector {
 		return &ServerList{conns: make([]*gmemcached.GMConnection, 0), ct: ct, wt: wt, rt: rt}
-	} else {
-		return nil
+	} else if st == HashSelector {
+		return &ConsistentHashSL{vconns: make([]*ConnectionHash, 0), conns: make([]*gmemcached.GMConnection, 0), ct: ct, wt: wt, rt: rt}
 	}
 	return nil
 }
